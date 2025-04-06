@@ -107,7 +107,7 @@ const Pricing = () => {
           </h1>
           
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl animate-fade-in" style={{ animationDelay: '100ms' }}>
-            Choose the plan that's right for your content needs, with no hidden fees.
+            Choose the plan that&apos;s right for your content needs, with no hidden fees.
           </p>
           
           {/* Billing toggle */}
@@ -230,7 +230,7 @@ const Pricing = () => {
           <div className="flex flex-col items-center text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold animate-fade-in">Frequently Asked Questions</h2>
             <p className="mt-4 text-muted-foreground max-w-2xl animate-fade-in" style={{ animationDelay: '100ms' }}>
-              Got questions? We've got answers.
+              Got questions? We&apos;ve got answers.
             </p>
           </div>
           
@@ -250,7 +250,7 @@ const Pricing = () => {
               },
               {
                 question: 'Do I need a LinkedIn account to use the service?',
-                answer: 'For the LinkedIn publishing feature, you'll need a LinkedIn account. However, you can still use our service to create content without the auto-publishing feature.',
+                answer: 'For the LinkedIn publishing feature, you\'ll need a LinkedIn account. However, you can still use our service to create content without the auto-publishing feature.',
               },
               {
                 question: 'What happens if I need more blogs than my plan allows?',
