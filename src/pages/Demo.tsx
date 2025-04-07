@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, ArrowRight, Search, PenTool, Edit, Sparkles, Mail, Linkedin, Loader2, Clock, AlertCircle, Lightbulb, FileText } from 'lucide-react';
@@ -9,7 +8,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
-// Demo workflow steps
 const workflowSteps = [
   {
     id: 'research',
@@ -87,37 +85,29 @@ const Demo = () => {
   );
   const [progress, setProgress] = useState(0);
   const [generatedBlog, setGeneratedBlog] = useState<string | null>(null);
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookUrl, setWebhookUrl] = useState('https://du19.app.n8n.cloud/webhook-test/4b1ff6d7-0044-4ccd-9e0e-e550d5b2aecb');
 
-  // Process workflow steps sequentially
   useEffect(() => {
     if (!isGenerating || currentStepIndex >= workflowSteps.length) return;
 
     const currentStep = workflowSteps[currentStepIndex];
     
-    // Update current step status to loading
     setStepsStatus(prev => 
       prev.map(step => 
         step.id === currentStep.id ? { ...step, status: 'loading' } : step
       )
     );
 
-    // Calculate progress percentage
     const stepProgress = (currentStepIndex / workflowSteps.length) * 100;
     setProgress(stepProgress);
 
     const timer = setTimeout(() => {
-      // Mark current step as completed
       setStepsStatus(prev => 
         prev.map(step => 
           step.id === currentStep.id ? { ...step, status: 'completed' } : step
         )
       );
 
-      // Play a subtle sound effect when a step completes (in a real app)
-      // new Audio('/sounds/complete.mp3').play().catch(() => {});
-
-      // Show toast for important steps
       if (['titles', 'content', 'approval', 'publishing'].includes(currentStep.id)) {
         toast({
           title: `${currentStep.name} completed`,
@@ -125,7 +115,6 @@ const Demo = () => {
         });
       }
 
-      // If this is the last step, finish the process
       if (currentStepIndex === workflowSteps.length - 1) {
         setProgress(100);
         setIsGenerating(false);
@@ -141,7 +130,6 @@ const Demo = () => {
         return;
       }
 
-      // Move to next step
       setCurrentStepIndex(prev => prev + 1);
     }, currentStep.duration);
 
@@ -163,15 +151,11 @@ const Demo = () => {
     }
   };
 
-  // Function to trigger the Zapier webhook
   const triggerZapierWebhook = async () => {
     try {
-      // Default webhook URL (replace with your actual URL or use the state variable)
-      const hookUrl = webhookUrl || "https://hooks.zapier.com/hooks/catch/your-hook-id/";
+      console.log("Triggering webhook:", webhookUrl);
       
-      console.log("Triggering Zapier webhook:", hookUrl);
-      
-      const response = await fetch(hookUrl, {
+      const response = await fetch(webhookUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,13 +171,15 @@ const Demo = () => {
       
       console.log("Webhook triggered successfully");
       
-      // Note: With mode: "no-cors", we won't get a proper response to check
-      // So we'll just assume it worked if no error was thrown
+      toast({
+        title: "Webhook Triggered",
+        description: "Your request has been sent to the webhook successfully.",
+      });
     } catch (error) {
       console.error("Error triggering webhook:", error);
       toast({
         title: "Webhook Error",
-        description: "Failed to trigger the Zapier webhook. Check the console for details.",
+        description: "Failed to trigger the webhook. Check the console for details.",
         variant: "destructive",
       });
     }
@@ -209,7 +195,6 @@ const Demo = () => {
       return;
     }
 
-    // Trigger the Zapier webhook
     triggerZapierWebhook();
 
     setIsGenerating(true);
@@ -219,12 +204,10 @@ const Demo = () => {
     setStepsStatus(workflowSteps.map(step => ({ id: step.id, status: 'idle' })));
   };
 
-  // Function to hide Zapier webhook URL input (toggle for demo purposes)
   const [showWebhookInput, setShowWebhookInput] = useState(false);
 
   return (
     <div className="flex flex-col w-full">
-      {/* Demo Section */}
       <section className="relative py-16 sm:py-20 min-h-[calc(100vh-64px)]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-primary/10 via-background to-background -z-10"></div>
         
@@ -238,7 +221,6 @@ const Demo = () => {
               Enter your topic below and watch our AI agent create a fully optimized blog post for you.
             </p>
             
-            {/* For development/testing only - toggle to show/hide webhook URL input */}
             <button 
               onClick={() => setShowWebhookInput(!showWebhookInput)} 
               className="text-xs text-muted-foreground/50 mt-2 hover:text-muted-foreground"
@@ -262,7 +244,6 @@ const Demo = () => {
           </div>
           
           <div className="flex flex-col gap-10 lg:flex-row lg:gap-16 flex-1">
-            {/* Input Form */}
             <div className="w-full lg:w-1/3 animate-fade-in" style={{ animationDelay: '200ms' }}>
               <div className="glass-card p-6 rounded-xl">
                 <h2 className="text-xl font-semibold mb-4">Start Your Blog</h2>
@@ -316,7 +297,6 @@ const Demo = () => {
                 </div>
               </div>
               
-              {/* Steps List */}
               <div className="mt-6 glass-card p-6 rounded-xl">
                 <h3 className="text-lg font-medium mb-4">Workflow Progress</h3>
                 
@@ -376,7 +356,6 @@ const Demo = () => {
                   })}
                 </div>
                 
-                {/* Progress bar */}
                 <div className="mt-6">
                   <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden">
                     <div 
@@ -391,7 +370,6 @@ const Demo = () => {
               </div>
             </div>
             
-            {/* Preview Panel */}
             <div className="w-full lg:w-2/3 animate-fade-in" style={{ animationDelay: '300ms' }}>
               <div className="glass-card h-full p-6 rounded-xl overflow-hidden flex flex-col">
                 <h2 className="text-xl font-semibold mb-4">Blog Preview</h2>
@@ -430,7 +408,6 @@ const Demo = () => {
                   )}
                 </div>
                 
-                {/* Remove the buttons below blog preview as requested */}
                 {generatedBlog && (
                   <div className="mt-6 pt-4 border-t border-border">
                     <div className="text-sm text-muted-foreground">
@@ -444,7 +421,6 @@ const Demo = () => {
         </div>
       </section>
       
-      {/* CTA Section */}
       <section className="py-16 sm:py-20 bg-muted/10">
         <div className="container">
           <div className="max-w-3xl mx-auto glass-card neon-glow p-8 sm:p-12 rounded-2xl text-center">
