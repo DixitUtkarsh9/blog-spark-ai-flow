@@ -1,12 +1,15 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Home, Code, DollarSign, PlayCircle, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Home, Code, DollarSign, PlayCircle, LayoutDashboard, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   const navigationItems = [
     { name: 'Home', href: '/', icon: Home },
@@ -15,6 +18,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { name: 'Demo', href: '/demo', icon: PlayCircle },
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,12 +52,26 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" className="hidden sm:flex">
-              <Link to="/login">Sign in</Link>
-            </Button>
-            <Button asChild className="btn-gradient">
-              <Link to="/demo">Try for free</Link>
-            </Button>
+            {user ? (
+              <>
+                <span className="hidden sm:inline-block text-sm text-muted-foreground">
+                  {user.email}
+                </span>
+                <Button variant="ghost" size="sm" onClick={handleSignOut} className="hidden sm:flex">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghost" className="hidden sm:flex">
+                  <Link to="/login">Sign in</Link>
+                </Button>
+                <Button asChild className="btn-gradient">
+                  <Link to="/login?tab=signup">Try for free</Link>
+                </Button>
+              </>
+            )}
             
             <Button
               variant="ghost"
@@ -80,9 +102,23 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <span>{item.name}</span>
             </Link>
           ))}
-          <Button asChild className="mt-4">
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
-          </Button>
+          {user ? (
+            <Button 
+              variant="destructive"
+              onClick={() => {
+                handleSignOut();
+                setMobileMenuOpen(false);
+              }}
+              className="mt-4"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign out
+            </Button>
+          ) : (
+            <Button asChild className="mt-4">
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
+            </Button>
+          )}
         </nav>
       </div>
       

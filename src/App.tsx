@@ -11,6 +11,7 @@ import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
 import Demo from "./pages/Demo";
 import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/pricing" element={<Layout><Pricing /></Layout>} />
             <Route path="/demo" element={<Layout><Demo /></Layout>} />
             <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/login" element={<Layout><Login /></Layout>} />
             <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
         </BrowserRouter>
