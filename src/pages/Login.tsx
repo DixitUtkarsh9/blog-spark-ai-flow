@@ -1,13 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -19,6 +19,8 @@ const Login = () => {
   const [error, setError] = useState('');
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || 'signin';
 
   // Redirect if already logged in
   useEffect(() => {
@@ -41,7 +43,11 @@ const Login = () => {
       await signIn(email, password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      if (err.message.includes('Email not confirmed')) {
+        setError('Email not confirmed. Please check your inbox for the verification email.');
+      } else {
+        setError(err.message || 'Failed to sign in');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -85,7 +91,7 @@ const Login = () => {
   return (
     <div className="container max-w-md mx-auto py-10">
       <Card>
-        <Tabs defaultValue="signin">
+        <Tabs defaultValue={tab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -125,10 +131,13 @@ const Login = () => {
                 </div>
                 
                 {error && (
-                  <div className="text-sm font-medium text-destructive">{error}</div>
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-sm font-medium ml-2">{error}</AlertDescription>
+                  </Alert>
                 )}
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex flex-col gap-4">
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
@@ -139,6 +148,9 @@ const Login = () => {
                     'Sign In'
                   )}
                 </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  If you've just signed up, you'll need to verify your email before signing in.
+                </p>
               </CardFooter>
             </form>
           </TabsContent>
@@ -204,7 +216,10 @@ const Login = () => {
                 </div>
                 
                 {error && (
-                  <div className="text-sm font-medium text-destructive">{error}</div>
+                  <Alert variant="destructive" className="mx-6 mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-sm font-medium ml-2">{error}</AlertDescription>
+                  </Alert>
                 )}
               </CardContent>
               <CardFooter className="flex flex-col">
@@ -220,6 +235,9 @@ const Login = () => {
                 </Button>
                 <p className="text-xs text-muted-foreground mt-4 text-center">
                   By creating an account, you agree to our Terms of Service and Privacy Policy.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  You'll need to verify your email before you can sign in.
                 </p>
               </CardFooter>
             </form>

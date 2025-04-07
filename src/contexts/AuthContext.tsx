@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,17 +43,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      
+      if (error) {
+        // Handle specific error for email not confirmed
+        if (error.message.includes('Email not confirmed')) {
+          toast({
+            variant: "destructive",
+            title: "Email not confirmed",
+            description: "Please check your email to verify your account, or disable email confirmation in Supabase dashboard.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Sign in failed",
+            description: error.message || "Something went wrong",
+          });
+        }
+        throw error;
+      }
+      
       toast({
         title: "Sign in successful",
         description: "You've been signed in to your account",
       });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign in failed",
-        description: error.message || "Something went wrong",
-      });
       throw error;
     } finally {
       setLoading(false);
