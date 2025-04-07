@@ -87,6 +87,7 @@ const Demo = () => {
   );
   const [progress, setProgress] = useState(0);
   const [generatedBlog, setGeneratedBlog] = useState<string | null>(null);
+  const [webhookUrl, setWebhookUrl] = useState('');
 
   // Process workflow steps sequentially
   useEffect(() => {
@@ -162,6 +163,42 @@ const Demo = () => {
     }
   };
 
+  // Function to trigger the Zapier webhook
+  const triggerZapierWebhook = async () => {
+    try {
+      // Default webhook URL (replace with your actual URL or use the state variable)
+      const hookUrl = webhookUrl || "https://hooks.zapier.com/hooks/catch/your-hook-id/";
+      
+      console.log("Triggering Zapier webhook:", hookUrl);
+      
+      const response = await fetch(hookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "no-cors", // Handle CORS issues
+        body: JSON.stringify({
+          topic: topic,
+          additionalInfo: additionalInfo,
+          timestamp: new Date().toISOString(),
+          triggered_from: window.location.origin,
+        }),
+      });
+      
+      console.log("Webhook triggered successfully");
+      
+      // Note: With mode: "no-cors", we won't get a proper response to check
+      // So we'll just assume it worked if no error was thrown
+    } catch (error) {
+      console.error("Error triggering webhook:", error);
+      toast({
+        title: "Webhook Error",
+        description: "Failed to trigger the Zapier webhook. Check the console for details.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleStartGeneration = () => {
     if (!topic.trim()) {
       toast({
@@ -172,12 +209,18 @@ const Demo = () => {
       return;
     }
 
+    // Trigger the Zapier webhook
+    triggerZapierWebhook();
+
     setIsGenerating(true);
     setCurrentStepIndex(0);
     setProgress(0);
     setGeneratedBlog(null);
     setStepsStatus(workflowSteps.map(step => ({ id: step.id, status: 'idle' })));
   };
+
+  // Function to hide Zapier webhook URL input (toggle for demo purposes)
+  const [showWebhookInput, setShowWebhookInput] = useState(false);
 
   return (
     <div className="flex flex-col w-full">
@@ -194,6 +237,28 @@ const Demo = () => {
             <p className="mt-4 text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
               Enter your topic below and watch our AI agent create a fully optimized blog post for you.
             </p>
+            
+            {/* For development/testing only - toggle to show/hide webhook URL input */}
+            <button 
+              onClick={() => setShowWebhookInput(!showWebhookInput)} 
+              className="text-xs text-muted-foreground/50 mt-2 hover:text-muted-foreground"
+            >
+              {showWebhookInput ? "Hide" : "Show"} Webhook Settings
+            </button>
+            
+            {showWebhookInput && (
+              <div className="mt-2 max-w-md mx-auto">
+                <Input
+                  placeholder="Enter your Zapier webhook URL"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  className="text-xs p-2 h-8 bg-background/50"
+                />
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  This is for testing only. In production, use server-side environment variables.
+                </p>
+              </div>
+            )}
           </div>
           
           <div className="flex flex-col gap-10 lg:flex-row lg:gap-16 flex-1">
@@ -365,21 +430,11 @@ const Demo = () => {
                   )}
                 </div>
                 
+                {/* Remove the buttons below blog preview as requested */}
                 {generatedBlog && (
-                  <div className="mt-6 pt-4 border-t border-border flex flex-wrap justify-between gap-4">
+                  <div className="mt-6 pt-4 border-t border-border">
                     <div className="text-sm text-muted-foreground">
                       Content created for: <span className="font-medium text-foreground">{topic}</span>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button variant="outline" size="sm">
-                        Download
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Copy
-                      </Button>
-                      <Button size="sm" className="btn-gradient">
-                        Approve & Publish
-                      </Button>
                     </div>
                   </div>
                 )}
