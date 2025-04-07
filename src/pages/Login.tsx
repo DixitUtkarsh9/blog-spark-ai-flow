@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Google } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +19,7 @@ const Login = () => {
   const [fullName, setFullName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'signin';
@@ -25,7 +27,7 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/demo');
     }
   }, [user, navigate]);
 
@@ -41,7 +43,7 @@ const Login = () => {
     try {
       setIsSubmitting(true);
       await signIn(email, password);
-      navigate('/dashboard');
+      navigate('/demo');
     } catch (err: any) {
       if (err.message.includes('Email not confirmed')) {
         setError('Email not confirmed. Please check your inbox for the verification email.');
@@ -83,6 +85,18 @@ const Login = () => {
       setError('');
     } catch (err: any) {
       setError(err.message || 'Failed to sign up');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsSubmitting(true);
+      await signInWithGoogle();
+      // No need to navigate as OAuth will handle redirection
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google');
     } finally {
       setIsSubmitting(false);
     }
@@ -148,6 +162,29 @@ const Login = () => {
                     'Sign In'
                   )}
                 </Button>
+                
+                <div className="relative w-full">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+                
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleGoogleSignIn}
+                  disabled={isSubmitting}
+                >
+                  <Google className="mr-2 h-4 w-4" />
+                  Google
+                </Button>
+                
                 <p className="text-xs text-muted-foreground text-center">
                   If you've just signed up, you'll need to verify your email before signing in.
                 </p>
@@ -216,13 +253,13 @@ const Login = () => {
                 </div>
                 
                 {error && (
-                  <Alert variant="destructive" className="mx-6 mt-4">
+                  <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription className="text-sm font-medium ml-2">{error}</AlertDescription>
                   </Alert>
                 )}
               </CardContent>
-              <CardFooter className="flex flex-col">
+              <CardFooter className="flex flex-col gap-4">
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
@@ -233,6 +270,29 @@ const Login = () => {
                     'Sign Up'
                   )}
                 </Button>
+                
+                <div className="relative w-full">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+                
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleGoogleSignIn}
+                  disabled={isSubmitting}
+                >
+                  <Google className="mr-2 h-4 w-4" />
+                  Google
+                </Button>
+                
                 <p className="text-xs text-muted-foreground mt-4 text-center">
                   By creating an account, you agree to our Terms of Service and Privacy Policy.
                 </p>

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ type AuthContextType = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -73,6 +75,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/demo`
+        }
+      });
+      
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Google sign in failed",
+          description: error.message || "Something went wrong",
+        });
+        throw error;
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Google sign in failed",
+        description: error.message || "Something went wrong",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signUp = async (email: string, password: string, userData: any) => {
     try {
       setLoading(true);
@@ -80,7 +112,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email, 
         password,
         options: {
-          data: userData
+          data: userData,
+          emailRedirectTo: `${window.location.origin}/demo`
         }
       });
       if (error) throw error;
@@ -128,6 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         signIn,
         signUp,
+        signInWithGoogle,
         signOut,
       }}
     >
