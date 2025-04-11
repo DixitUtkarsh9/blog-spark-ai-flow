@@ -405,7 +405,7 @@ const Pricing = () => {
           <div className="max-w-4xl mx-auto">
             <div className="rounded-xl overflow-hidden glass-card p-4 animate-fade-in" style={{ animationDelay: '200ms' }}>
               <div className="relative">
-                <Carousel className="w-full" autoplay={isPlaying} loop={true}>
+                <Carousel className="w-full" autoPlay={isPlaying} loop={true}>
                   <CarouselContent>
                     {demoSteps.map((step, index) => (
                       <CarouselItem key={index}>

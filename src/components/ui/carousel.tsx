@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -17,6 +18,9 @@ type CarouselProps = {
   plugins?: CarouselPlugin
   orientation?: "horizontal" | "vertical"
   setApi?: (api: CarouselApi) => void
+  autoPlay?: boolean
+  loop?: boolean
+  autoPlayInterval?: number
 }
 
 type CarouselContextProps = {
@@ -52,6 +56,9 @@ const Carousel = React.forwardRef<
       plugins,
       className,
       children,
+      autoPlay = false,
+      loop = false,
+      autoPlayInterval = 4000,
       ...props
     },
     ref
@@ -60,11 +67,13 @@ const Carousel = React.forwardRef<
       {
         ...opts,
         axis: orientation === "horizontal" ? "x" : "y",
+        loop: loop,
       },
       plugins
     )
     const [canScrollPrev, setCanScrollPrev] = React.useState(false)
     const [canScrollNext, setCanScrollNext] = React.useState(false)
+    const [autoPlayTimer, setAutoPlayTimer] = React.useState<NodeJS.Timeout | null>(null)
 
     const onSelect = React.useCallback((api: CarouselApi) => {
       if (!api) {
@@ -95,6 +104,38 @@ const Carousel = React.forwardRef<
       },
       [scrollPrev, scrollNext]
     )
+
+    // Autoplay functionality
+    React.useEffect(() => {
+      if (!api || !autoPlay) {
+        return
+      }
+
+      const startAutoPlay = () => {
+        if (autoPlayTimer) clearInterval(autoPlayTimer)
+        const timer = setInterval(() => {
+          api.scrollNext()
+        }, autoPlayInterval)
+        setAutoPlayTimer(timer)
+      }
+
+      const stopAutoPlay = () => {
+        if (autoPlayTimer) {
+          clearInterval(autoPlayTimer)
+          setAutoPlayTimer(null)
+        }
+      }
+
+      // Start autoplay
+      if (autoPlay) {
+        startAutoPlay()
+      }
+
+      // Clean up on unmount
+      return () => {
+        stopAutoPlay()
+      }
+    }, [api, autoPlay, autoPlayInterval, autoPlayTimer])
 
     React.useEffect(() => {
       if (!api || !setApi) {
@@ -130,6 +171,9 @@ const Carousel = React.forwardRef<
           scrollNext,
           canScrollPrev,
           canScrollNext,
+          autoPlay,
+          loop,
+          autoPlayInterval,
         }}
       >
         <div
