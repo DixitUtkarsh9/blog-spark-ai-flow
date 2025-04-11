@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, ArrowRight, Search, PenTool, Edit, Sparkles, Mail, Linkedin, Loader2, Clock, AlertCircle, Lightbulb, FileText } from 'lucide-react';
@@ -74,6 +75,12 @@ interface WorkflowStepStatus {
   status: StepStatus;
 }
 
+interface WebhookResponse {
+  content?: string;
+  title?: string;
+  error?: string;
+}
+
 const Demo = () => {
   const { toast } = useToast();
   const [topic, setTopic] = useState('');
@@ -86,6 +93,8 @@ const Demo = () => {
   const [progress, setProgress] = useState(0);
   const [generatedBlog, setGeneratedBlog] = useState<string | null>(null);
   const [webhookUrl, setWebhookUrl] = useState('https://platform.copilotgigs.com/webhook/4b1ff6d7-0044-4ccd-9e0e-e550d5b2aecb');
+  const [webhookResponse, setWebhookResponse] = useState<WebhookResponse | null>(null);
+  const [isWebhookLoading, setIsWebhookLoading] = useState(false);
 
   useEffect(() => {
     if (!isGenerating || currentStepIndex >= workflowSteps.length) return;
@@ -118,7 +127,11 @@ const Demo = () => {
       if (currentStepIndex === workflowSteps.length - 1) {
         setProgress(100);
         setIsGenerating(false);
-        setGeneratedBlog(`# How to Optimize Your Website for ${topic}\n\nIn today's digital landscape, having a well-optimized website is crucial for attracting organic traffic and converting visitors into customers. This comprehensive guide explores effective strategies to optimize your website for "${topic}" and improve your online presence.\n\n## Understanding ${topic} and Its Importance\n\n${topic} has become increasingly important in the digital marketing space. As more businesses move online, the competition for visibility has never been higher. This section explores why ${topic} matters and how it can impact your business goals.\n\n## Key Strategies for ${topic} Optimization\n\n1. **Research and Analysis**: Begin with thorough keyword research to understand what your target audience is searching for related to ${topic}.\n\n2. **Technical Optimization**: Ensure your website's technical foundations support your ${topic} goals with fast loading times and mobile responsiveness.\n\n3. **Content Creation**: Develop high-quality, relevant content that addresses user needs while incorporating your targeted keywords naturally.\n\n4. **User Experience**: Design your website with user experience in mind, making navigation intuitive and information easily accessible.\n\n## Measuring Success and Making Adjustments\n\nImplementing analytics tools is essential to track the performance of your ${topic} strategy. This data allows you to make informed decisions and continuous improvements.\n\n## Conclusion\n\nOptimizing your website for ${topic} is an ongoing process that requires attention to detail, strategic planning, and regular updates. By following the guidelines outlined in this article, you'll be well on your way to improving your online visibility and achieving your business objectives.`);
+        
+        // Only set the default blog content if no webhook response was received
+        if (!webhookResponse || !webhookResponse.content) {
+          setGeneratedBlog(`# How to Optimize Your Website for ${topic}\n\nIn today's digital landscape, having a well-optimized website is crucial for attracting organic traffic and converting visitors into customers. This comprehensive guide explores effective strategies to optimize your website for "${topic}" and improve your online presence.\n\n## Understanding ${topic} and Its Importance\n\n${topic} has become increasingly important in the digital marketing space. As more businesses move online, the competition for visibility has never been higher. This section explores why ${topic} matters and how it can impact your business goals.\n\n## Key Strategies for ${topic} Optimization\n\n1. **Research and Analysis**: Begin with thorough keyword research to understand what your target audience is searching for related to ${topic}.\n\n2. **Technical Optimization**: Ensure your website's technical foundations support your ${topic} goals with fast loading times and mobile responsiveness.\n\n3. **Content Creation**: Develop high-quality, relevant content that addresses user needs while incorporating your targeted keywords naturally.\n\n4. **User Experience**: Design your website with user experience in mind, making navigation intuitive and information easily accessible.\n\n## Measuring Success and Making Adjustments\n\nImplementing analytics tools is essential to track the performance of your ${topic} strategy. This data allows you to make informed decisions and continuous improvements.\n\n## Conclusion\n\nOptimizing your website for ${topic} is an ongoing process that requires attention to detail, strategic planning, and regular updates. By following the guidelines outlined in this article, you'll be well on your way to improving your online visibility and achieving your business objectives.`);
+        }
         
         setTimeout(() => {
           toast({
@@ -134,7 +147,7 @@ const Demo = () => {
     }, currentStep.duration);
 
     return () => clearTimeout(timer);
-  }, [isGenerating, currentStepIndex, topic, toast]);
+  }, [isGenerating, currentStepIndex, topic, toast, webhookResponse]);
 
   const getToastMessage = (stepId: string) => {
     switch (stepId) {
@@ -153,6 +166,7 @@ const Demo = () => {
 
   const triggerZapierWebhook = async () => {
     try {
+      setIsWebhookLoading(true);
       console.log("Triggering webhook:", webhookUrl);
       
       const response = await fetch(webhookUrl, {
@@ -160,7 +174,6 @@ const Demo = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        mode: "no-cors", // Handle CORS issues
         body: JSON.stringify({
           topic: topic,
           additionalInfo: additionalInfo,
@@ -169,11 +182,25 @@ const Demo = () => {
         }),
       });
       
+      // Try to get the response data - this might fail due to CORS
+      try {
+        const data = await response.json();
+        console.log("Webhook response data:", data);
+        setWebhookResponse(data);
+        
+        // If we have actual content from the webhook, use it
+        if (data && data.content) {
+          setGeneratedBlog(data.content);
+        }
+      } catch (parseError) {
+        console.log("Could not parse webhook response (likely due to CORS):", parseError);
+      }
+      
       console.log("Webhook triggered successfully");
       
       toast({
-        title: "Webhook Triggered",
-        description: "Your request has been sent to the webhook successfully.",
+        title: "Content Generation Started",
+        description: "Your request has been sent successfully. Content generation in progress...",
       });
     } catch (error) {
       console.error("Error triggering webhook:", error);
@@ -182,6 +209,8 @@ const Demo = () => {
         description: "Failed to trigger the webhook. Check the console for details.",
         variant: "destructive",
       });
+    } finally {
+      setIsWebhookLoading(false);
     }
   };
 
@@ -201,10 +230,33 @@ const Demo = () => {
     setCurrentStepIndex(0);
     setProgress(0);
     setGeneratedBlog(null);
+    setWebhookResponse(null);
     setStepsStatus(workflowSteps.map(step => ({ id: step.id, status: 'idle' })));
   };
 
   const [showWebhookInput, setShowWebhookInput] = useState(false);
+
+  const formatContent = (content: string) => {
+    // Check if content is already in Markdown format
+    if (content.includes('#') || content.includes('**')) {
+      return content.split('\n').map((line, i) => {
+        if (line.startsWith('# ')) {
+          return <h1 key={i} className="text-2xl font-bold mb-4">{line.replace('# ', '')}</h1>;
+        } else if (line.startsWith('## ')) {
+          return <h2 key={i} className="text-xl font-semibold mt-6 mb-3">{line.replace('## ', '')}</h2>;
+        } else if (line.trim() === '') {
+          return <br key={i} />;
+        } else {
+          return <p key={i} className="mb-3">{line}</p>;
+        }
+      });
+    } else {
+      // If it's plain text, render with paragraph breaks
+      return content.split('\n\n').map((paragraph, i) => (
+        paragraph.trim() ? <p key={i} className="mb-3">{paragraph}</p> : <br key={i} />
+      ));
+    }
+  };
 
   return (
     <div className="flex flex-col w-full">
@@ -279,13 +331,13 @@ const Demo = () => {
                   
                   <Button
                     onClick={handleStartGeneration}
-                    disabled={isGenerating || !topic.trim()}
+                    disabled={isGenerating || isWebhookLoading || !topic.trim()}
                     className="w-full btn-gradient"
                   >
-                    {isGenerating ? (
+                    {isGenerating || isWebhookLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
+                        {isWebhookLoading ? "Contacting API..." : "Generating..."}
                       </>
                     ) : (
                       <>
@@ -375,7 +427,7 @@ const Demo = () => {
                 <h2 className="text-xl font-semibold mb-4">Blog Preview</h2>
                 
                 <div className="flex-1 overflow-hidden">
-                  {!isGenerating && !generatedBlog ? (
+                  {!isGenerating && !generatedBlog && !isWebhookLoading ? (
                     <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-6">
                       <FileText className="h-12 w-12 mb-4 text-muted-foreground/70" />
                       <h3 className="text-lg font-medium mb-2">No Content Generated Yet</h3>
@@ -383,7 +435,7 @@ const Demo = () => {
                         Enter a topic and click "Create Blog" to see your AI-generated content appear here in real-time.
                       </p>
                     </div>
-                  ) : isGenerating ? (
+                  ) : isGenerating || isWebhookLoading ? (
                     <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-6">
                       <Loader2 className="h-12 w-12 mb-4 text-primary animate-spin" />
                       <h3 className="text-lg font-medium mb-2">Generating Content</h3>
@@ -393,17 +445,18 @@ const Demo = () => {
                     </div>
                   ) : (
                     <div className="h-full overflow-y-auto p-4 text-left">
-                      {generatedBlog?.split('\n').map((line, i) => {
-                        if (line.startsWith('# ')) {
-                          return <h1 key={i} className="text-2xl font-bold mb-4">{line.replace('# ', '')}</h1>;
-                        } else if (line.startsWith('## ')) {
-                          return <h2 key={i} className="text-xl font-semibold mt-6 mb-3">{line.replace('## ', '')}</h2>;
-                        } else if (line.trim() === '') {
-                          return <br key={i} />;
-                        } else {
-                          return <p key={i} className="mb-3">{line}</p>;
-                        }
-                      })}
+                      {webhookResponse && webhookResponse.title && (
+                        <h1 className="text-2xl font-bold mb-4">{webhookResponse.title}</h1>
+                      )}
+                      
+                      {generatedBlog && formatContent(generatedBlog)}
+                      
+                      {webhookResponse && webhookResponse.error && (
+                        <div className="p-4 bg-destructive/10 text-destructive rounded-lg mt-4">
+                          <h3 className="font-medium mb-2">Error from API:</h3>
+                          <p>{webhookResponse.error}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
