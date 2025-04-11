@@ -4,3 +4,9 @@ export interface WebhookResponse {
   title?: string;
   error?: string;
 }
+
+export interface DemoStep {
+  title: string;
+  description: string;
+  image?: string;
+}

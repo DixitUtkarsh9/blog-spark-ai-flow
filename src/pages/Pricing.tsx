@@ -1,11 +1,44 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, X, ArrowRight } from 'lucide-react';
+import { Check, X, ArrowRight, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { 
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const Pricing = () => {
+  // Toast for notifications
+  const { toast } = useToast();
+  
+  // Demo animation state
+  const [isPlaying, setIsPlaying] = useState(false);
+
   // Pricing tiers
   const pricingTiers = [
     {
@@ -94,6 +127,65 @@ const Pricing = () => {
 
   // Billing toggle
   const [billing, setBilling] = React.useState<'monthly' | 'weekly'>('weekly');
+
+  // Demo animation frames
+  const demoSteps = [
+    {
+      title: "Keyword Research",
+      description: "Our AI identifies high-value keywords and analyzes search intent.",
+      image: "/demo-step1.png",
+    },
+    {
+      title: "Content Creation",
+      description: "AI generates a comprehensive blog post optimized for SEO.",
+      image: "/demo-step2.png",
+    },
+    {
+      title: "Review & Approve",
+      description: "Review the content via email and request any changes.",
+      image: "/demo-step3.png",
+    },
+    {
+      title: "Publish to LinkedIn",
+      description: "Approved content is automatically formatted and published.",
+      image: "/demo-step4.png",
+    },
+  ];
+
+  // Waitlist form validation schema
+  const formSchema = z.object({
+    name: z.string().min(2, {
+      message: "Name must be at least 2 characters.",
+    }),
+    email: z.string().email({
+      message: "Please enter a valid email address.",
+    }),
+    company: z.string().optional(),
+  });
+
+  // Form handling
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      company: "",
+    },
+  });
+
+  const onSubmitWaitlist = (values: z.infer<typeof formSchema>) => {
+    console.log(values);
+    toast({
+      title: "Added to waitlist!",
+      description: "We'll notify you when we launch.",
+    });
+    form.reset();
+  };
+
+  // Toggle demo animation playback
+  const togglePlayback = () => {
+    setIsPlaying(!isPlaying);
+  };
 
   return (
     <div className="flex flex-col w-full">
@@ -202,24 +294,165 @@ const Pricing = () => {
                   </ul>
                   
                   <div className="mt-auto">
-                    <Button
-                      asChild
-                      className={cn(
-                        "w-full",
-                        tier.popular 
-                          ? "btn-gradient" 
-                          : "bg-muted/30 hover:bg-muted/50 text-foreground"
-                      )}
-                    >
-                      <Link to={tier.ctaLink}>
-                        {tier.cta}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
+                    {tier.name === "Free" ? (
+                      <Button
+                        asChild
+                        className={cn(
+                          "w-full",
+                          tier.popular 
+                            ? "btn-gradient" 
+                            : "bg-muted/30 hover:bg-muted/50 text-foreground"
+                        )}
+                      >
+                        <Link to="/demo">
+                          {tier.cta}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            className={cn(
+                              "w-full",
+                              tier.popular 
+                                ? "btn-gradient" 
+                                : "bg-muted/30 hover:bg-muted/50 text-foreground"
+                            )}
+                          >
+                            Join Waitlist
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Join the {tier.name} Plan Waitlist</DialogTitle>
+                            <DialogDescription>
+                              We'll notify you as soon as we launch this plan.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmitWaitlist)} className="space-y-4">
+                              <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Your name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="you@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="company"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Company (Optional)</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Your company" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full btn-gradient">
+                                Join Waitlist
+                              </Button>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* Demo Preview Section with Interactive Animation */}
+      <section className="py-16 sm:py-20 bg-muted/10 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,var(--tw-gradient-stops))] from-secondary/10 via-transparent to-transparent -z-10"></div>
+        
+        <div className="container">
+          <div className="flex flex-col items-center text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold animate-fade-in">
+              See the Blog Writer in Action
+            </h2>
+            <p className="mt-4 text-muted-foreground max-w-2xl animate-fade-in" style={{ animationDelay: '100ms' }}>
+              Watch our AI transform a simple topic into a fully-optimized blog post in real-time.
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <div className="rounded-xl overflow-hidden glass-card p-4 animate-fade-in" style={{ animationDelay: '200ms' }}>
+              <div className="relative">
+                <Carousel className="w-full" autoplay={isPlaying} loop={true}>
+                  <CarouselContent>
+                    {demoSteps.map((step, index) => (
+                      <CarouselItem key={index}>
+                        <div className="p-1">
+                          <div className="flex flex-col rounded-lg overflow-hidden">
+                            <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                              <div className="text-center p-8">
+                                <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
+                                <p className="text-muted-foreground">{step.description}</p>
+                              </div>
+                            </div>
+                            <div className="p-4 bg-muted/20">
+                              <p className="text-sm text-center">
+                                Step {index + 1} of {demoSteps.length}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
+                </Carousel>
+                
+                <div className="mt-4 flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={togglePlayback}
+                    className="rounded-full h-12 w-12"
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-6 w-6" />
+                    ) : (
+                      <Play className="h-6 w-6" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-8 text-center animate-fade-in" style={{ animationDelay: '300ms' }}>
+              <Button asChild size="lg" className="btn-gradient text-lg">
+                <Link to="/demo">Try it yourself</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -241,8 +474,8 @@ const Pricing = () => {
                 answer: 'The free trial lets you experience the full process of creating one blog post using our platform. You\'ll see every step from keyword research to LinkedIn publishing.',
               },
               {
-                question: 'Can I cancel my subscription at any time?',
-                answer: 'Yes, you can cancel your subscription at any time. We offer a hassle-free cancellation process with no questions asked.',
+                question: 'When will the paid plans be available?',
+                answer: 'We\'re currently in beta, and paid plans will be available soon. Join our waitlist to get early access and special launch pricing.',
               },
               {
                 question: 'How is content quality ensured?',
@@ -276,15 +509,73 @@ const Pricing = () => {
           <div className="max-w-3xl mx-auto glass-card neon-glow p-8 sm:p-12 rounded-2xl text-center">
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to transform your content strategy?</h2>
             <p className="text-muted-foreground mb-8">
-              Try our platform today and see the difference it can make for your business.
+              Try our platform today and join the waitlist for our premium plans.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="btn-gradient text-lg">
                 <Link to="/demo">Start your free trial</Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/contact">Contact sales</Link>
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="lg">
+                    Join the waitlist
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Join our Waitlist</DialogTitle>
+                    <DialogDescription>
+                      Be the first to know when we launch our premium plans.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmitWaitlist)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="you@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="company"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Company (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your company" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full btn-gradient">
+                        Join Waitlist
+                      </Button>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

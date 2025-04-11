@@ -16,6 +16,9 @@ const CtaSection: React.FC = () => {
             <Button asChild size="lg" className="btn-gradient text-lg">
               <Link to="/pricing">View pricing plans</Link>
             </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link to="/demo">Try free demo</Link>
+            </Button>
           </div>
         </div>
       </div>
