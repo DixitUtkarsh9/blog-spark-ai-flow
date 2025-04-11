@@ -85,7 +85,7 @@ const Demo = () => {
   );
   const [progress, setProgress] = useState(0);
   const [generatedBlog, setGeneratedBlog] = useState<string | null>(null);
-  const [webhookUrl, setWebhookUrl] = useState('https://du19.app.n8n.cloud/webhook-test/4b1ff6d7-0044-4ccd-9e0e-e550d5b2aecb');
+  const [webhookUrl, setWebhookUrl] = useState('https://platform.copilotgigs.com/webhook/4b1ff6d7-0044-4ccd-9e0e-e550d5b2aecb');
 
   useEffect(() => {
     if (!isGenerating || currentStepIndex >= workflowSteps.length) return;
