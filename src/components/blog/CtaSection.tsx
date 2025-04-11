@@ -1,8 +1,12 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+
 const CtaSection: React.FC = () => {
-  return <section className="py-16 sm:py-20 bg-muted/10">
+  return (
+    <section className="py-16 sm:py-20 bg-muted/10">
       <div className="container">
         <div className="max-w-3xl mx-auto glass-card neon-glow p-8 sm:p-12 rounded-2xl text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to scale your content strategy?</h2>
@@ -11,9 +15,10 @@ const CtaSection: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="btn-gradient text-lg">
-              <Link to="/pricing">Join WishList
-
-            </Link>
+              <Link to="/pricing">
+                Join Waitlist
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link to="/demo">Try free demo</Link>
@@ -21,6 +26,8 @@ const CtaSection: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default CtaSection;

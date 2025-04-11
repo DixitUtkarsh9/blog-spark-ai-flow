@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import BlogForm from '@/components/blog/BlogForm';
@@ -61,7 +60,6 @@ const Demo = () => {
         setProgress(100);
         setIsGenerating(false);
         
-        // Only set the default blog content if no webhook response was received
         if (!webhookResponse || !webhookResponse.content) {
           setGeneratedBlog(`# How to Optimize Your Website for ${topic}\n\nIn today's digital landscape, having a well-optimized website is crucial for attracting organic traffic and converting visitors into customers. This comprehensive guide explores effective strategies to optimize your website for "${topic}" and improve your online presence.\n\n## Understanding ${topic} and Its Importance\n\n${topic} has become increasingly important in the digital marketing space. As more businesses move online, the competition for visibility has never been higher. This section explores why ${topic} matters and how it can impact your business goals.\n\n## Key Strategies for ${topic} Optimization\n\n1. **Research and Analysis**: Begin with thorough keyword research to understand what your target audience is searching for related to ${topic}.\n\n2. **Technical Optimization**: Ensure your website's technical foundations support your ${topic} goals with fast loading times and mobile responsiveness.\n\n3. **Content Creation**: Develop high-quality, relevant content that addresses user needs while incorporating your targeted keywords naturally.\n\n4. **User Experience**: Design your website with user experience in mind, making navigation intuitive and information easily accessible.\n\n## Measuring Success and Making Adjustments\n\nImplementing analytics tools is essential to track the performance of your ${topic} strategy. This data allows you to make informed decisions and continuous improvements.\n\n## Conclusion\n\nOptimizing your website for ${topic} is an ongoing process that requires attention to detail, strategic planning, and regular updates. By following the guidelines outlined in this article, you'll be well on your way to improving your online visibility and achieving your business objectives.`);
         }
@@ -115,13 +113,11 @@ const Demo = () => {
         }),
       });
       
-      // Try to get the response data - this might fail due to CORS
       try {
         const data = await response.json();
         console.log("Webhook response data:", data);
         setWebhookResponse(data);
         
-        // If we have actual content from the webhook, use it
         if (data && data.content) {
           setGeneratedBlog(data.content);
         }
