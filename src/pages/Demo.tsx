@@ -1,84 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Check, ArrowRight, Search, PenTool, Edit, Sparkles, Mail, Linkedin, Loader2, Clock, AlertCircle, Lightbulb, FileText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils';
-
-const workflowSteps = [
-  {
-    id: 'research',
-    name: 'Keyword Research',
-    description: 'Analyzing keywords and search intent',
-    icon: Search,
-    duration: 5000,
-  },
-  {
-    id: 'ideation',
-    name: 'Content Ideation',
-    description: 'Generating content structure and outline',
-    icon: Lightbulb,
-    duration: 6000,
-  },
-  {
-    id: 'titles',
-    name: 'Title Generation',
-    description: 'Creating SEO-optimized title options',
-    icon: FileText,
-    duration: 4000,
-  },
-  {
-    id: 'content',
-    name: 'Content Creation',
-    description: 'Writing comprehensive blog content',
-    icon: PenTool,
-    duration: 10000,
-  },
-  {
-    id: 'editing',
-    name: 'Editing & Formatting',
-    description: 'Refining and formatting for readability',
-    icon: Edit,
-    duration: 7000,
-  },
-  {
-    id: 'humanizing',
-    name: 'Humanizing Content',
-    description: 'Adjusting tone for natural reading',
-    icon: Sparkles,
-    duration: 5000,
-  },
-  {
-    id: 'approval',
-    name: 'Email Approval',
-    description: 'Sending for user review via Gmail',
-    icon: Mail,
-    duration: 3000,
-  },
-  {
-    id: 'publishing',
-    name: 'LinkedIn Publishing',
-    description: 'Posting approved content to LinkedIn',
-    icon: Linkedin,
-    duration: 4000,
-  },
-];
-
-type StepStatus = 'idle' | 'loading' | 'completed' | 'failed';
+import BlogForm from '@/components/blog/BlogForm';
+import WorkflowProgress from '@/components/blog/WorkflowProgress';
+import BlogPreview from '@/components/blog/BlogPreview';
+import CtaSection from '@/components/blog/CtaSection';
+import workflowSteps from '@/components/blog/workflowSteps';
+import { WebhookResponse } from '@/components/blog/types';
+import { StepStatus } from '@/components/blog/WorkflowProgress';
 
 interface WorkflowStepStatus {
   id: string;
   status: StepStatus;
-}
-
-interface WebhookResponse {
-  content?: string;
-  title?: string;
-  error?: string;
 }
 
 const Demo = () => {
@@ -92,7 +25,7 @@ const Demo = () => {
   );
   const [progress, setProgress] = useState(0);
   const [generatedBlog, setGeneratedBlog] = useState<string | null>(null);
-  const [webhookUrl, setWebhookUrl] = useState('https://platform.copilotgigs.com/webhook/4b1ff6d7-0044-4ccd-9e0e-e550d5b2aecb');
+  const [webhookUrl] = useState('https://platform.copilotgigs.com/webhook/4b1ff6d7-0044-4ccd-9e0e-e550d5b2aecb');
   const [webhookResponse, setWebhookResponse] = useState<WebhookResponse | null>(null);
   const [isWebhookLoading, setIsWebhookLoading] = useState(false);
 
@@ -214,16 +147,10 @@ const Demo = () => {
     }
   };
 
-  const handleStartGeneration = () => {
-    if (!topic.trim()) {
-      toast({
-        title: "Topic required",
-        description: "Please enter a blog topic to continue",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleStartGeneration = (newTopic: string, newAdditionalInfo: string) => {
+    setTopic(newTopic);
+    setAdditionalInfo(newAdditionalInfo);
+    
     triggerZapierWebhook();
 
     setIsGenerating(true);
@@ -232,30 +159,6 @@ const Demo = () => {
     setGeneratedBlog(null);
     setWebhookResponse(null);
     setStepsStatus(workflowSteps.map(step => ({ id: step.id, status: 'idle' })));
-  };
-
-  const [showWebhookInput, setShowWebhookInput] = useState(false);
-
-  const formatContent = (content: string) => {
-    // Check if content is already in Markdown format
-    if (content.includes('#') || content.includes('**')) {
-      return content.split('\n').map((line, i) => {
-        if (line.startsWith('# ')) {
-          return <h1 key={i} className="text-2xl font-bold mb-4">{line.replace('# ', '')}</h1>;
-        } else if (line.startsWith('## ')) {
-          return <h2 key={i} className="text-xl font-semibold mt-6 mb-3">{line.replace('## ', '')}</h2>;
-        } else if (line.trim() === '') {
-          return <br key={i} />;
-        } else {
-          return <p key={i} className="mb-3">{line}</p>;
-        }
-      });
-    } else {
-      // If it's plain text, render with paragraph breaks
-      return content.split('\n\n').map((paragraph, i) => (
-        paragraph.trim() ? <p key={i} className="mb-3">{paragraph}</p> : <br key={i} />
-      ));
-    }
   };
 
   return (
@@ -272,223 +175,40 @@ const Demo = () => {
             <p className="mt-4 text-muted-foreground animate-fade-in" style={{ animationDelay: '100ms' }}>
               Enter your topic below and watch our AI agent create a fully optimized blog post for you.
             </p>
-            
-            <button 
-              onClick={() => setShowWebhookInput(!showWebhookInput)} 
-              className="text-xs text-muted-foreground/50 mt-2 hover:text-muted-foreground"
-            >
-              {showWebhookInput ? "Hide" : "Show"} Webhook Settings
-            </button>
-            
-            {showWebhookInput && (
-              <div className="mt-2 max-w-md mx-auto">
-                <Input
-                  placeholder="Enter your Zapier webhook URL"
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                  className="text-xs p-2 h-8 bg-background/50"
-                />
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  This is for testing only. In production, use server-side environment variables.
-                </p>
-              </div>
-            )}
           </div>
           
           <div className="flex flex-col gap-10 lg:flex-row lg:gap-16 flex-1">
             <div className="w-full lg:w-1/3 animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <div className="glass-card p-6 rounded-xl">
-                <h2 className="text-xl font-semibold mb-4">Start Your Blog</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="topic" className="block text-sm font-medium mb-1">
-                      Blog Topic or Keyword <span className="text-primary">*</span>
-                    </label>
-                    <Input
-                      id="topic"
-                      placeholder="e.g., SEO best practices for 2025"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      disabled={isGenerating}
-                      className="input-gradient"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="additional-info" className="block text-sm font-medium mb-1">
-                      Additional Information (Optional)
-                    </label>
-                    <Textarea
-                      id="additional-info"
-                      placeholder="Target audience, specific points to cover, tone preference, etc."
-                      value={additionalInfo}
-                      onChange={(e) => setAdditionalInfo(e.target.value)}
-                      disabled={isGenerating}
-                      className="min-h-[120px] input-gradient"
-                    />
-                  </div>
-                  
-                  <Button
-                    onClick={handleStartGeneration}
-                    disabled={isGenerating || isWebhookLoading || !topic.trim()}
-                    className="w-full btn-gradient"
-                  >
-                    {isGenerating || isWebhookLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {isWebhookLoading ? "Contacting API..." : "Generating..."}
-                      </>
-                    ) : (
-                      <>
-                        Create Blog
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
+              <BlogForm 
+                onStartGeneration={handleStartGeneration}
+                isGenerating={isGenerating}
+                isWebhookLoading={isWebhookLoading}
+              />
               
-              <div className="mt-6 glass-card p-6 rounded-xl">
-                <h3 className="text-lg font-medium mb-4">Workflow Progress</h3>
-                
-                <div className="space-y-3">
-                  {workflowSteps.map((step, index) => {
-                    const stepStatus = stepsStatus.find(s => s.id === step.id)?.status || 'idle';
-                    
-                    return (
-                      <div 
-                        key={step.id}
-                        className={cn(
-                          "flex items-center justify-between p-2 rounded-lg transition-colors",
-                          currentStepIndex === index ? "bg-muted/30" : "",
-                          stepStatus === 'completed' ? "text-foreground" : "text-muted-foreground"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center",
-                            stepStatus === 'loading' ? "bg-primary/20 animate-pulse" : 
-                            stepStatus === 'completed' ? "bg-primary text-primary-foreground" : 
-                            stepStatus === 'failed' ? "bg-destructive text-destructive-foreground" : 
-                            "bg-muted/30"
-                          )}>
-                            {stepStatus === 'loading' ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : stepStatus === 'completed' ? (
-                              <Check className="h-4 w-4" />
-                            ) : stepStatus === 'failed' ? (
-                              <AlertCircle className="h-4 w-4" />
-                            ) : (
-                              <step.icon className="h-4 w-4" />
-                            )}
-                          </div>
-                          
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex flex-col text-left">
-                                  <span className="text-sm font-medium">{step.name}</span>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{step.description}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          {stepStatus === 'loading' && (
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="mt-6">
-                  <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
-                  <div className="mt-2 text-right text-sm text-muted-foreground">
-                    {Math.round(progress)}% Complete
-                  </div>
-                </div>
+              <div className="mt-6">
+                <WorkflowProgress
+                  workflowSteps={workflowSteps}
+                  stepsStatus={stepsStatus}
+                  currentStepIndex={currentStepIndex}
+                  progress={progress}
+                />
               </div>
             </div>
             
             <div className="w-full lg:w-2/3 animate-fade-in" style={{ animationDelay: '300ms' }}>
-              <div className="glass-card h-full p-6 rounded-xl overflow-hidden flex flex-col">
-                <h2 className="text-xl font-semibold mb-4">Blog Preview</h2>
-                
-                <div className="flex-1 overflow-hidden">
-                  {!isGenerating && !generatedBlog && !isWebhookLoading ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-6">
-                      <FileText className="h-12 w-12 mb-4 text-muted-foreground/70" />
-                      <h3 className="text-lg font-medium mb-2">No Content Generated Yet</h3>
-                      <p className="max-w-md">
-                        Enter a topic and click "Create Blog" to see your AI-generated content appear here in real-time.
-                      </p>
-                    </div>
-                  ) : isGenerating || isWebhookLoading ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-6">
-                      <Loader2 className="h-12 w-12 mb-4 text-primary animate-spin" />
-                      <h3 className="text-lg font-medium mb-2">Generating Content</h3>
-                      <p className="max-w-md">
-                        Our AI is working on creating your {topic} blog post. This typically takes about 45 seconds.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="h-full overflow-y-auto p-4 text-left">
-                      {webhookResponse && webhookResponse.title && (
-                        <h1 className="text-2xl font-bold mb-4">{webhookResponse.title}</h1>
-                      )}
-                      
-                      {generatedBlog && formatContent(generatedBlog)}
-                      
-                      {webhookResponse && webhookResponse.error && (
-                        <div className="p-4 bg-destructive/10 text-destructive rounded-lg mt-4">
-                          <h3 className="font-medium mb-2">Error from API:</h3>
-                          <p>{webhookResponse.error}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                {generatedBlog && (
-                  <div className="mt-6 pt-4 border-t border-border">
-                    <div className="text-sm text-muted-foreground">
-                      Content created for: <span className="font-medium text-foreground">{topic}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <BlogPreview
+                isGenerating={isGenerating}
+                isWebhookLoading={isWebhookLoading}
+                generatedBlog={generatedBlog}
+                webhookResponse={webhookResponse}
+                topic={topic}
+              />
             </div>
           </div>
         </div>
       </section>
       
-      <section className="py-16 sm:py-20 bg-muted/10">
-        <div className="container">
-          <div className="max-w-3xl mx-auto glass-card neon-glow p-8 sm:p-12 rounded-2xl text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to scale your content strategy?</h2>
-            <p className="text-muted-foreground mb-8">
-              Get full access to our AI Blog Writer and create unlimited SEO-optimized content.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="btn-gradient text-lg">
-                <Link to="/pricing">View pricing plans</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <CtaSection />
     </div>
   );
 };
